@@ -1,0 +1,50 @@
+<nodeDefs>
+  <nodeDef id="CONTROLLER" nls="CTL">
+    <sts>
+      <st id="ST" editor="NJS_BOOL" />
+      <st id="GV0" editor="CTL_STATUS" />
+      <st id="CLITEMP" editor="CTL_TEMP" />
+      <st id="GV1" editor="CTL_ST" />
+      <st id="GV2" editor="CTL_TEMP" />
+      <st id="GV3" editor="CTL_TEMP" />
+      <st id="GV4" editor="CTL_ST" />
+      <st id="GV5" editor="CTL_TEMP" />
+      <st id="GV6" editor="CTL_TEMP" />
+    </sts>
+    <cmds>
+      <sends />
+      <accepts>
+        <cmd id="QUERY" />
+      </accepts>
+    </cmds>
+  </nodeDef>
+  <nodeDef id="CIRCUIT" nls="CRT">
+    <sts>
+      <st id="ST" editor="CRT_ST" />
+    </sts>
+    <cmds>
+      <sends />
+      <accepts>
+        <cmd id="DON" />
+        <cmd id="DOF" />
+      </accepts>
+    </cmds>
+  </nodeDef>
+  <nodeDef id="TEMPERATURE" nls="TMP">
+    <sts>
+      <st id="ST" editor="CTL_ST" />
+      <st id="CLISPH" editor="CTL_TEMP" />
+      <st id="CLITEMP" editor="CTL_TEMP" />    
+    </sts>
+    <cmds>
+      <sends />
+      <accepts>
+        <cmd id="DON" />
+        <cmd id="DOF" />
+        <cmd id="SET_TEMP">
+          <p id="" editor="CTL_TEMP" init="CLISPH" />
+        </cmd>
+      </accepts>
+    </cmds>
+  </nodeDef>
+</nodeDefs>

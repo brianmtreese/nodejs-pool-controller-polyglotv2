@@ -1,0 +1,33 @@
+ND-CONTROLLER-NAME = Pool Controller
+ND-CONTROLLER-ICON = GenericCtl
+ST-CTL-ST-NAME = Pool Controller Online
+ST-CTL-CLITEMP-NAME = Air Temperature
+ST-CTL-GV0-NAME = NodeJS Pool Controller Online
+ST-CTL-GV1-NAME = Pool Status
+ST-CTL-GV2-NAME = Pool Temperature
+ST-CTL-GV3-NAME = Pool Setpoint
+ST-CTL-GV4-NAME = Spa Status
+ST-CTL-GV5-NAME = Spa Temperature
+ST-CTL-GV6-NAME = Spa Setpoint
+IX_CTL_ST-0 = Off
+IX_CTL_ST-1 = On
+ST_CTL_ST-0 = Off
+ST_CTL_ST-1 = On
+
+ND-CIRCUIT-NAME = Pool Circuit
+ND-CIRCUIT-ICON = Switch
+ST-CRT-ST-NAME = Current State
+IX_CRT_ST-0 = Off
+IX_CRT_ST-1 = On
+CMD-CRT-DON-NAME = On
+CMD-CRT-DOF-NAME = Off
+
+ND-TEMPERATURE-NAME = Heater Control
+ND-TEMPERATURE-ICON = TempSensor
+ST-TMP-ST-NAME = Current State
+ST-TMP-CLISPH-NAME = Setpoint
+ST-TMP-CLITEMP-NAME = Current Temperature
+CMD-TMP-DON-NAME = On
+CMD-TMP-DOF-NAME = Off
+CMD-TMP-SET_TEMP-NAME = Setpoint
+

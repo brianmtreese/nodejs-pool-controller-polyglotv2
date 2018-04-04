@@ -1,0 +1,18 @@
+<editors>
+  <editor id="NJS_BOOL">
+    <range uom="2" subset="0,1" />
+  </editor>
+  <editor id="CTL_ST">
+    <range uom="25" subset="0-1" nls="IX_CTL_ST" />
+  </editor>
+  <editor id="CRT_ST">
+    <range uom="25" subset="0,1" nls="IX_CRT_ST" />
+  </editor>
+  <editor id="TMP_ST">
+    <range uom="25" subset="0,1" nls="IX_TMP_ST" />
+  </editor>
+  <editor id="CTL_TEMP">
+    <range uom="17" min="34" max="104" step="1" prec="0" />
+  </editor>
+</editors>
+
