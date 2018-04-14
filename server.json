@@ -1,11 +1,10 @@
 {
     "name": "Pool",
-    "docs": "",
+    "docs": "https://github.com/brianmtreese/nodejs-pool-controller-polyglotv2",
     "type": "python",
     "executable": "pool-poly.py",
     "install": "install.sh",
     "description": "Integrate your ISY 994i and NodeJS Pool Controller application to communicate and control your Pentair compatible pool equipment.",
-    "notice": "",
     "shortPoll": "5",
     "longPoll": "60",
     "credits": [
@@ -14,8 +13,8 @@
             "author": "Brian Treese",
             "version": "1.0.0",
             "date": "March 20, 2018",
-            "source": "",
-            "license": ""
+            "source": "https://github.com/brianmtreese/nodejs-pool-controller-polyglotv2",
+            "license": "https://github.com/brianmtreese/nodejs-pool-controller-polyglotv2/blob/master/LICENSE"
         }
     ]
 }
