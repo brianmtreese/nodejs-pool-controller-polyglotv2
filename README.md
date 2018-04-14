@@ -11,7 +11,7 @@ This is a Nodeserver for Polyglot v2 that interfaces with the [NodeJs Pool Contr
 
 #### Installation
 
-1. First install [Polyglot V2](https://github.com/UniversalDevicesInc/polyglot-v2) if you haven't already
+1. First install [Polyglot V2](https://github.com/UniversalDevicesInc/polyglot-v2) and [nodejs-poolController](https://github.com/tagyoureit/nodejs-poolController) if you haven't already
 2. Clone or copy the files from this repository into the folder ~/.polyglot/nodeservers/nodejs-pool-controller-polyglotv2
 3. Log into the Polyglot V2 Dashboard and navigate to "Nodeservers" > "Add Nodeserver"
 5. Choose the "Local (Co-resident with Polyglot)" node server type then choose "Pool" in the from the available node servers
