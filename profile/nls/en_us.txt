@@ -1,8 +1,8 @@
 ND-CONTROLLER-NAME = Pool Controller
 ND-CONTROLLER-ICON = GenericCtl
-ST-CTL-ST-NAME = Pool Controller Online
+ST-CTL-ST-NAME = NodeJS Pool Controller Online
+ST-CTL-GV0-NAME = Heater Status
 ST-CTL-CLITEMP-NAME = Air Temperature
-ST-CTL-GV0-NAME = NodeJS Pool Controller Online
 ST-CTL-GV1-NAME = Pool Status
 ST-CTL-GV2-NAME = Pool Temperature
 ST-CTL-GV3-NAME = Pool Setpoint

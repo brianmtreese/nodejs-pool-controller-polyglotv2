@@ -2,7 +2,7 @@
   <nodeDef id="CONTROLLER" nls="CTL">
     <sts>
       <st id="ST" editor="NJS_BOOL" />
-      <st id="GV0" editor="CTL_STATUS" />
+      <st id="GV0" editor="CTL_ST" />
       <st id="CLITEMP" editor="CTL_TEMP" />
       <st id="GV1" editor="CTL_ST" />
       <st id="GV2" editor="CTL_TEMP" />

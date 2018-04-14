@@ -12,28 +12,6 @@ _ISY_BOOL_UOM = 2 # Used for reporting status values for Controller node
 _ISY_INDEX_UOM = 25 # Index UOM for custom states (must match editor/NLS in profile):
 _ISY_TEMP_F_UOM = 17 # UOM for temperatures
 
-# CONVERT TO CONFIGURATION DATA
-_BASE_URL = 'http://localhost:3000'
-_CIRCUITS_NOT_USED = ['9','10','11','12','13','14','15','16','17','18','19','20']
-_POOL_CIRCUIT_ID = 1
-_SPA_CIRCUIT_ID = 6
-
-# Get all data from nodejs pool controller api
-allData = requests.get(url='{}/all'.format(_BASE_URL))
-allDataJson = allData.json()
-
-# Get circuits in use
-circuits = allDataJson['circuits']
-circuitsNotUsed = _CIRCUITS_NOT_USED
-for key in circuits.keys():
-    for circuitNotUsed in circuitsNotUsed:
-        if key == circuitNotUsed:
-            del circuits[key]
-
-# Get temperature data
-temperatureData = requests.get(url='{}/temperatures'.format(_BASE_URL))
-temperatureDataJson = temperatureData.json() 
-
 with open('server.json') as data:
     SERVERDATA = json.load(data)
     data.close()
@@ -53,6 +31,43 @@ class Controller(polyinterface.Controller):
         
     def start(self):
         LOGGER.info('Starting Pool Controller Polyglot v2 NodeServer version {}'.format(VERSION))
+        
+        # Get nodejs pool controller api url and set up data
+        try:
+            if 'api_url' in self.polyConfig['customParams']:
+                self.apiBaseUrl = self.polyConfig['customParams']['api_url']
+                
+                # Get all data from nodejs pool controller api
+                allData = requests.get(url='{}/all'.format(self.apiBaseUrl))
+                self.allDataJson = allData.json()
+                
+                if 'circuits_not_used' in self.polyConfig['customParams']:
+                    
+                    # Get the list of circuits that are not in use
+                    self.circuitsNotUsed = eval('[' + self.polyConfig['customParams']['circuits_not_used'].decode('utf-8') + ']')
+
+                    # Get circuits in use
+                    self.circuits = self.allDataJson['circuits']
+                    circuitsNotUsed = self.circuitsNotUsed
+                    for key in self.circuits.keys():
+                        for circuitNotUsed in circuitsNotUsed:
+                            if key == circuitNotUsed:
+                                del self.circuits[key]
+                
+                else:
+                    self.circuits = self.allDataJson['circuits']
+                    
+                # Get temperature data
+                temperatureData = requests.get(url='{}/temperatures'.format(self.apiBaseUrl))
+                self.temperatureDataJson = temperatureData.json()
+                
+            else:
+                LOGGER.error('NodeJs Pool Controller API url required in order to establish connection.  Enter custom parameter of \'api_url\' in Polyglot configuration.')
+                return False
+        except Exception as ex:
+            LOGGER.error('Error reading NodeJs Pool Controller API url from Polyglot Configuration: %s', str(ex))
+            return False
+        
         self.discover()
         
     def shortPoll(self):
@@ -61,71 +76,81 @@ class Controller(polyinterface.Controller):
     
     def discover(self, command = None):
         
-        # Discover Pool Circuit Nodes
-        LOGGER.info('Found {} Circuits'.format(len(circuits)))
+        # Discover pool circuit nodes
+        LOGGER.info('Found {} Circuits'.format(len(self.circuits)))
         
-        for circuit in sorted(circuits, key=int):
-            id = circuit
-            number = circuit
-            address = circuits[circuit].get('numberStr')
-            name = circuits[circuit].get('friendlyName').title()
-            status = circuits[circuit].get('status')
-            
-            if address not in self.nodes:
-                self.addNode(Circuit(self, self.address, id, address, name, status, number))
-            else:
-                LOGGER.info('Circuit {} already configured.'.format(name))
+        if self.circuits:
         
-        # Add Pool and Spa Temperature Nodes
-        temperatures = ['spa','pool']
-              
-        for temperature in temperatures:
-            id = temperature
-            address = ('{}_heat'.format(temperature))
-            name = ('{} Heat'.format(temperature)).title()
-            type = temperature
+            for circuit in sorted(self.circuits, key=int):
+                id = circuit
+                number = circuit
+                address = self.circuits[circuit].get('numberStr')
+                name = self.circuits[circuit].get('friendlyName').title()
+                status = self.circuits[circuit].get('status')
+                
+                if address not in self.nodes:
+                    self.addNode(Circuit(self, self.address, id, address, name, status, number, self.apiBaseUrl))
+                else:
+                    LOGGER.info('Circuit {} already configured.'.format(name))
             
-            if address not in self.nodes:
-                self.addNode(Temperature(self, self.address, id, address, name, type))
-            else:
-                LOGGER.info('Temperature {} already configured.'.format(name))
+            # Add pool and spa temperature nodes
+            temperatures = ['spa','pool']
+                  
+            for temperature in temperatures:
+                id = temperature
+                address = ('{}_heat'.format(temperature))
+                name = ('{} Heat'.format(temperature)).title()
+                type = temperature
+                
+                if address not in self.nodes:
+                    self.addNode(Temperature(self, self.address, id, address, name, type, self.temperatureDataJson, self.apiBaseUrl))
+                else:
+                    LOGGER.info('Temperature {} already configured.'.format(name))
     
     def update(self, report=True):
         
-        # Get node js pool controller status
-        controllerData = requests.get(url='{}/all'.format(_BASE_URL))
-        if controllerData.status_code == 200:
-            self.setDriver('GV0', 1, report)
-        else:
-            self.setDriver('GV0', 0, report)    
-        
-        # Get temperatures      
-        airTemp = temperatureDataJson['airTemp']
-        poolTemp = temperatureDataJson['poolTemp']
-        poolSetpoint = temperatureDataJson['poolSetPoint']
-        spaTemp = temperatureDataJson['spaTemp']
-        spaSetpoint = temperatureDataJson['spaSetPoint']
-        
-        # Get specific circuit statuses
-        for circuit in circuits:
-            circuitType = circuits[circuit].get('circuitFunction')
-            if circuitType == 'Pool':
-                status = circuits[circuit].get('status')
-                self.setDriver('GV1', status, report)
-            if circuitType == 'Spa':
-                status = circuits[circuit].get('status')
-                self.setDriver('GV4', status, report)
+        if self.apiBaseUrl:
+            
+            # Get node js pool controller status
+            controllerData = requests.get(url='{}/all'.format(self.apiBaseUrl))
+            if controllerData.status_code == 200:
+                self.setDriver('ST', 1, report)
+            else:
+                self.setDriver('ST', 0, report)    
+            
+            # Get temperatures
+            temperatureData = requests.get(url='{}/temperatures'.format(self.apiBaseUrl))
+            temperatureDataJson = temperatureData.json()
+            heaterActive = temperatureDataJson['heaterActive']
+            airTemp = temperatureDataJson['airTemp']
+            poolTemp = temperatureDataJson['poolTemp']
+            poolSetpoint = temperatureDataJson['poolSetPoint']
+            spaTemp = temperatureDataJson['spaTemp']
+            spaSetpoint = temperatureDataJson['spaSetPoint']
+            
+            self.setDriver('GV0', heaterActive, report)
+            self.setDriver('CLITEMP', airTemp, report)
+            self.setDriver('GV2', poolTemp, report)
+            self.setDriver('GV3', poolSetpoint, report)
+            self.setDriver('GV5', spaTemp, report)
+            self.setDriver('GV6', spaSetpoint, report)
+            
+            # Get specific circuit statuses
+            allData = requests.get(url='{}/all'.format(self.apiBaseUrl))
+            allDataJson = allData.json()
+            circuits = allDataJson['circuits']                    
+            for circuit in circuits:
+                circuitType = circuits[circuit].get('circuitFunction')
+                if circuitType == 'Pool':
+                    status = circuits[circuit].get('status')
+                    self.setDriver('GV1', status, report)
+                if circuitType == 'Spa':
+                    status = circuits[circuit].get('status')
+                    self.setDriver('GV4', status, report)
 
-        # Update the controller node drivers
-        self.setDriver('CLITEMP', airTemp, report)
-        self.setDriver('GV2', poolTemp, report)
-        self.setDriver('GV3', poolSetpoint, report)
-        self.setDriver('GV5', spaTemp, report)
-        self.setDriver('GV6', spaSetpoint, report)
-    
     drivers = [
         {'driver': 'ST', 'value': 0, 'uom': _ISY_BOOL_UOM},
-        {'driver': 'GV0', 'value': 0, 'uom': _ISY_BOOL_UOM},        
+        {'driver': 'GV0', 'value': 0, 'uom': _ISY_INDEX_UOM},        
         {'driver': 'CLITEMP', 'value': 0, 'uom': _ISY_TEMP_F_UOM},
         {'driver': 'GV1', 'value': 0, 'uom': _ISY_INDEX_UOM},
         {'driver': 'GV2', 'value': 0, 'uom': _ISY_TEMP_F_UOM},
@@ -144,11 +169,12 @@ class Circuit(polyinterface.Node):
     
     id = 'CIRCUIT'
     
-    def __init__(self, controller, primary, id, address, name, status, number):
+    def __init__(self, controller, primary, id, address, name, status, number, apiBaseUrl):
         super(Circuit, self).__init__(controller, primary, address, name)
         self.name = name
         self.status = status
         self.number = number
+        self.apiBaseUrl = apiBaseUrl
 
     def start(self):
         self.query()
@@ -162,18 +188,18 @@ class Circuit(polyinterface.Node):
         self.reportDrivers()
         
     def get_status(self, report=True):
-        circuitData = requests.get(url='{0}/circuit/{1}'.format(_BASE_URL, self.number))
+        circuitData = requests.get(url='{0}/circuit/{1}'.format(self.apiBaseUrl, self.number))
         circuitDataJson = circuitData.json()
         status = circuitDataJson['status']
         self.setDriver('ST', status, report)
         
     def cmd_don(self, command):
-        requests.get(url='{0}/circuit/{1}/toggle'.format(_BASE_URL, self.number))
+        requests.get(url='{0}/circuit/{1}/toggle'.format(self.apiBaseUrl, self.number))
         self.update()
         print (self.name + ' turned on')
 
     def cmd_dof(self, command):
-        requests.get(url='{0}/circuit/{1}/toggle'.format(_BASE_URL, self.number))
+        requests.get(url='{0}/circuit/{1}/toggle'.format(self.apiBaseUrl, self.number))
         self.update()
         print (self.name + ' turned off')
         
@@ -189,10 +215,12 @@ class Temperature(polyinterface.Node):
 
     id = 'TEMPERATURE'
     
-    def __init__(self, controller, primary, id, address, name, type):
+    def __init__(self, controller, primary, id, address, name, type, temperatureDataJson, apiBaseUrl):
         super(Temperature, self).__init__(controller, primary, address, name)
         self.name = name
         self.type = type
+        self.temperatureDataJson = temperatureDataJson
+        self.apiBaseUrl = apiBaseUrl
         
     def update(self):
         self.get_status()
@@ -202,6 +230,8 @@ class Temperature(polyinterface.Node):
         self.reportDrivers()
         
     def get_status(self, report=True):
+        temperatureData = requests.get(url='{}/temperatures'.format(self.apiBaseUrl))
+        temperatureDataJson = temperatureData.json()
         if self.type == 'spa':
             status = temperatureDataJson['spaHeatMode']
             temperature = temperatureDataJson['spaTemp']
@@ -216,35 +246,34 @@ class Temperature(polyinterface.Node):
         self.setDriver('CLITEMP', temperature, report)
         
     def cmd_don(self, command):
-        if self.name == 'spa':
-            status = temperatureDataJson['spaHeatMode']
+        if self.type == 'spa':
+            status = self.temperatureDataJson['spaHeatMode']
             if status == 0:
-                requests.get(url='{}/spaheat/mode/1'.format(_BASE_URL))
-                
+                requests.get(url='{}/spaheat/mode/1'.format(self.apiBaseUrl))  
         else:
-            status = temperatureDataJson['poolHeatMode']
+            status = self.temperatureDataJson['poolHeatMode']
             if status == 0:
-                requests.get(url='{}/poolheat/mode/1'.format(_BASE_URL))
+                requests.get(url='{}/poolheat/mode/1'.format(self.apiBaseUrl))
 
     def cmd_dof(self, command):
-        if self.name == 'spa':
-            status = temperatureDataJson['spaHeatMode']
+        if self.type == 'spa':
+            status = self.temperatureDataJson['spaHeatMode']
             if status == 1:
-                requests.get(url='{}/spaheat/mode/0'.format(_BASE_URL))
-                
+                requests.get(url='{}/spaheat/mode/0'.format(self.apiBaseUrl))       
         else:
-            status = temperatureDataJson['poolHeatMode']
+            status = self.temperatureDataJson['poolHeatMode']
             if status == 1:
-                requests.get(url='{}/poolheat/mode/0'.format(_BASE_URL))
+                requests.get(url='{}/poolheat/mode/0'.format(self.apiBaseUrl))
 
     def cmd_set_temp(self, command):        
         value = int(command.get('value'))
-        if self.name == 'spa':
-            requests.get(url='{0}/spaheat/setpoint/{1}'.format(_BASE_URL, value))
-                
+        if self.type == 'spa':
+            requests.get(url='{0}/spaheat/setpoint/{1}'.format(self.apiBaseUrl, value))
+            self.update()
         else:
-            requests.get(url='{0}/poolheat/setpoint/{1}'.format(_BASE_URL, value))
-
+            requests.get(url='{0}/poolheat/setpoint/{1}'.format(self.apiBaseUrl, value))
+            self.update()
+        
     drivers = [
         {'driver': 'ST', 'value': 0, 'uom': _ISY_INDEX_UOM},
         {'driver': 'CLISPH', 'value': 0, 'uom': _ISY_TEMP_F_UOM},
