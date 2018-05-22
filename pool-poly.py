@@ -47,7 +47,7 @@ class Controller(polyinterface.Controller):
                     self.circuitsNotUsed = eval('[' + self.polyConfig['customParams']['circuits_not_used'].decode('utf-8') + ']')
 
                     # Get circuits in use
-                    self.circuits = self.allDataJson['circuits']
+                    self.circuits = self.allDataJson['circuit']
                     circuitsNotUsed = self.circuitsNotUsed
                     for key in self.circuits.keys():
                         for circuitNotUsed in circuitsNotUsed:
@@ -55,7 +55,7 @@ class Controller(polyinterface.Controller):
                                 del self.circuits[key]
                 
                 else:
-                    self.circuits = self.allDataJson['circuits']
+                    self.circuits = self.allDataJson['circuit']
                     
                 # Get temperature data
                 temperatureData = requests.get(url='{}/temperatures'.format(self.apiBaseUrl))
@@ -120,7 +120,7 @@ class Controller(polyinterface.Controller):
             
             # Get temperatures
             temperatureData = requests.get(url='{}/temperatures'.format(self.apiBaseUrl))
-            temperatureDataJson = temperatureData.json()
+            temperatureDataJson = temperatureData.json()['temperature']
             heaterActive = temperatureDataJson['heaterActive']
             airTemp = temperatureDataJson['airTemp']
             poolTemp = temperatureDataJson['poolTemp']
@@ -138,7 +138,7 @@ class Controller(polyinterface.Controller):
             # Get specific circuit statuses
             allData = requests.get(url='{}/all'.format(self.apiBaseUrl))
             allDataJson = allData.json()
-            circuits = allDataJson['circuits']                    
+            circuits = allDataJson['circuit']                    
             for circuit in circuits:
                 circuitType = circuits[circuit].get('circuitFunction')
                 if circuitType == 'Pool':
@@ -231,7 +231,7 @@ class Temperature(polyinterface.Node):
         
     def get_status(self, report=True):
         temperatureData = requests.get(url='{}/temperatures'.format(self.apiBaseUrl))
-        temperatureDataJson = temperatureData.json()
+        temperatureDataJson = temperatureData.json()['temperature']
         if self.type == 'spa':
             status = temperatureDataJson['spaHeatMode']
             temperature = temperatureDataJson['spaTemp']
