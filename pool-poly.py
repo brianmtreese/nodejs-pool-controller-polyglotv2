@@ -47,12 +47,15 @@ class Controller(polyinterface.Controller):
                     self.circuitsNotUsed = eval('[' + self.polyConfig['customParams']['circuits_not_used'] + ']')
 
                     # Get circuits in use
-                    self.circuits = self.allDataJson['circuit']
+                    allCircuits = self.allDataJson['circuit']
+                    circuitsUsed = copy.deepcopy(allCircuits)
                     circuitsNotUsed = self.circuitsNotUsed
-                    for key in self.circuits.keys():
+                    for key in allCircuits.keys():
                         for circuitNotUsed in circuitsNotUsed:
                             if key == circuitNotUsed:
-                                del self.circuits[key]
+                                del circuitsUsed[key]
+                                
+                    self.circuits = circuitsUsed
                 
                 else:
                     self.circuits = self.allDataJson['circuit']
