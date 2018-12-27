@@ -44,7 +44,7 @@ class Controller(polyinterface.Controller):
                 if 'circuits_not_used' in self.polyConfig['customParams']:
                     
                     # Get the list of circuits that are not in use
-                    self.circuitsNotUsed = eval('[' + self.polyConfig['customParams']['circuits_not_used'].decode('utf-8') + ']')
+                    self.circuitsNotUsed = eval('[' + self.polyConfig['customParams']['circuits_not_used'] + ']')
 
                     # Get circuits in use
                     self.circuits = self.allDataJson['circuit']
