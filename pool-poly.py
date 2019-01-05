@@ -5,12 +5,15 @@ import sys
 import time
 import json
 import requests
+import copy
 
 LOGGER = polyinterface.LOGGER
 
 _ISY_BOOL_UOM = 2 # Used for reporting status values for Controller node
 _ISY_INDEX_UOM = 25 # Index UOM for custom states (must match editor/NLS in profile):
 _ISY_TEMP_F_UOM = 17 # UOM for temperatures
+_ISY_THERMO_MODE_UOM = 67 # UOM for thermostat mode
+_ISY_THERMO_HCS_UOM = 66 # UOM for thermostat heat/cool state
 
 with open('server.json') as data:
     SERVERDATA = json.load(data)
@@ -119,19 +122,19 @@ class Controller(polyinterface.Controller):
             if controllerData.status_code == 200:
                 self.setDriver('ST', 1, report)
             else:
-                self.setDriver('ST', 0, report)    
+                self.setDriver('ST', 0, report)  
             
             # Get temperatures
             temperatureData = requests.get(url='{}/temperatures'.format(self.apiBaseUrl))
             temperatureDataJson = temperatureData.json()['temperature']
-            heaterActive = temperatureDataJson['heaterActive']
             airTemp = temperatureDataJson['airTemp']
             poolTemp = temperatureDataJson['poolTemp']
             poolSetpoint = temperatureDataJson['poolSetPoint']
             spaTemp = temperatureDataJson['spaTemp']
             spaSetpoint = temperatureDataJson['spaSetPoint']
+            poolHeatMode = temperatureDataJson['poolHeatMode']
+            spaHeatMode = temperatureDataJson['spaHeatMode']
             
-            self.setDriver('GV0', heaterActive, report)
             self.setDriver('CLITEMP', airTemp, report)
             self.setDriver('GV2', poolTemp, report)
             self.setDriver('GV3', poolSetpoint, report)
@@ -147,9 +150,13 @@ class Controller(polyinterface.Controller):
                 if circuitType == 'Pool':
                     status = circuits[circuit].get('status')
                     self.setDriver('GV1', status, report)
+                    if poolHeatMode and status == 1:
+                        self.setDriver('GV0', 1, report)
                 if circuitType == 'Spa':
                     status = circuits[circuit].get('status')
                     self.setDriver('GV4', status, report)
+                    if spaHeatMode and status == 1:
+                        self.setDriver('GV0', 1, report)
 
     drivers = [
         {'driver': 'ST', 'value': 0, 'uom': _ISY_BOOL_UOM},
@@ -249,22 +256,26 @@ class Temperature(polyinterface.Node):
         self.setDriver('CLITEMP', temperature, report)
         
     def cmd_don(self, command):
+        temperatureData = requests.get(url='{}/temperatures'.format(self.apiBaseUrl))
+        temperatureDataJson = temperatureData.json()['temperature']
         if self.type == 'spa':
-            status = self.temperatureDataJson['spaHeatMode']
+            status = temperatureDataJson['spaHeatMode']
             if status == 0:
                 requests.get(url='{}/spaheat/mode/1'.format(self.apiBaseUrl))  
         else:
-            status = self.temperatureDataJson['poolHeatMode']
+            status = temperatureDataJson['poolHeatMode']
             if status == 0:
                 requests.get(url='{}/poolheat/mode/1'.format(self.apiBaseUrl))
 
     def cmd_dof(self, command):
+        temperatureData = requests.get(url='{}/temperatures'.format(self.apiBaseUrl))
+        temperatureDataJson = temperatureData.json()['temperature']
         if self.type == 'spa':
-            status = self.temperatureDataJson['spaHeatMode']
+            status = temperatureDataJson['spaHeatMode']
             if status == 1:
                 requests.get(url='{}/spaheat/mode/0'.format(self.apiBaseUrl))       
         else:
-            status = self.temperatureDataJson['poolHeatMode']
+            status = temperatureDataJson['poolHeatMode']
             if status == 1:
                 requests.get(url='{}/poolheat/mode/0'.format(self.apiBaseUrl))
 
@@ -280,7 +291,10 @@ class Temperature(polyinterface.Node):
     drivers = [
         {'driver': 'ST', 'value': 0, 'uom': _ISY_INDEX_UOM},
         {'driver': 'CLISPH', 'value': 0, 'uom': _ISY_TEMP_F_UOM},
-        {'driver': 'CLITEMP', 'value': 0, 'uom': _ISY_TEMP_F_UOM}
+        {'driver': 'CLITEMP', 'value': 0, 'uom': _ISY_TEMP_F_UOM},
+        {'driver': 'CLIMD', 'value': 0, 'uom': _ISY_THERMO_MODE_UOM},
+        {'driver': 'CLIHCS', 'value': 0, 'uom': _ISY_THERMO_HCS_UOM},
+        {'driver': 'CLISPC', 'value': 0, 'uom': _ISY_TEMP_F_UOM}
     ]
     commands = {
         'DON': cmd_don,
