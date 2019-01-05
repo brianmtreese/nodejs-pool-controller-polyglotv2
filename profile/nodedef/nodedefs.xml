@@ -34,7 +34,9 @@
     <sts>
       <st id="ST" editor="CTL_ST" />
       <st id="CLISPH" editor="CTL_TEMP" />
-      <st id="CLITEMP" editor="CTL_TEMP" />    
+      <st id="CLITEMP" editor="CTL_TEMP" />
+      <st id="CLISPH" editor="CTL_TEMP" hide="T" />
+      <st id="CLIMD" editor="CTL_TEMP" hide="T" />
     </sts>
     <cmds>
       <sends />
